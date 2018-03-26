@@ -66,6 +66,7 @@ def newObj(obj):
 # metric mappings
 #  These map from metric id strings to class names
 METRIC_MAPPING = {'euclidean': EuclideanDistance,
+                  'weighted_euclidean': WeightedEuclideanDistance,
                   'l2': EuclideanDistance,
                   'minkowski': MinkowskiDistance,
                   'p': MinkowskiDistance,
@@ -440,6 +441,51 @@ cdef class EuclideanDistance(DistanceMetric):
 
     def dist_to_rdist(self, dist):
         return dist ** 2
+# ------------------------------------------------------------
+# Euclidean Distance
+#  d = sqrt(sum(x_i^2 - y_i^2))
+cdef class WeightedEuclideanDistance(DistanceMetric):
+    """Weighted Euclidean Distance metric
+
+    .. math::
+       D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
+    """
+    def __init__(self):
+        self.vec = np.array([2,4,3], dtype=DTYPE)
+        self.vec_ptr = get_vec_ptr(self.vec)
+        self.p = 2
+
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                             ITYPE_t size) nogil except -1:
+        cdef DTYPE_t tmp, d=0
+        cdef np.intp_t j
+        for j in range(size):
+            tmp = x1[j] - x2[j]
+            d += self.vec_ptr[j] * tmp * tmp
+        return sqrt(d)
+
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) nogil except -1:
+        cdef DTYPE_t tmp, d=0
+        cdef np.intp_t j
+        for j in range(size):
+            tmp = x1[j] - x2[j]
+            d += self.vec_ptr[j] *  tmp * tmp
+        return d
+
+
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+        return sqrt(rdist)
+
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
+        return dist * dist
+
+    def rdist_to_dist(self, rdist):
+        return np.sqrt(rdist)
+
+    def dist_to_rdist(self, dist):
+        return dist ** 2
+
 
 
 # ------------------------------------------------------------

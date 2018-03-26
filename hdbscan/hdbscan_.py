@@ -71,6 +71,8 @@ def _hdbscan_generic(X, min_samples=5, alpha=1.0, metric='minkowski', p=2,
         distance_matrix = pairwise_distances(X, metric=metric, p=p)
     elif metric == 'arccos':
         distance_matrix = pairwise_distances(X, metric='cosine', **kwargs)
+    elif metric == 'weighted_euclidean':
+        distance_matrix = DistanceMetric.get_metric(metric).pairwise(X)
     else:
         distance_matrix = pairwise_distances(X, metric=metric, **kwargs)
 
